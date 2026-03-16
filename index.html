@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="이직 플래너">
+<title>이직 플래너</title>
+<style>
+:root{
+  --bg:var(--color-background-tertiary,#f4f4f0);
+  --card:var(--color-background-primary,#fff);
+  --card2:var(--color-background-secondary,#f0f0ec);
+  --border:var(--color-border-tertiary,rgba(0,0,0,0.08));
+  --border2:var(--color-border-secondary,rgba(0,0,0,0.15));
+  --text:var(--color-text-primary,#111);
+  --text2:var(--color-text-secondary,#555);
+  --text3:var(--color-text-tertiary,#999);
+  --accent:#7c6af7;--accent2:#a594ff;
+  --gym:#16a34a;--gym-bg:rgba(22,163,74,0.1);
+  --algo:#dc2626;--algo-bg:rgba(220,38,38,0.1);
+  --dev:#2563eb;--dev-bg:rgba(37,99,235,0.1);
+  --side:#ea580c;--side-bg:rgba(234,88,12,0.1);
+  --eng:#9333ea;--eng-bg:rgba(147,51,234,0.1);
+  --job:#15803d;--job-bg:rgba(21,128,61,0.1);
+  --rest:#475569;--rest-bg:rgba(71,85,105,0.1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;background:var(--bg);color:var(--text);}
+
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 8px;}
+.top-title{font-size:17px;font-weight:600;color:var(--text);}
+.top-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+.notif-btn{width:34px;height:34px;border-radius:50%;border:0.5px solid var(--border2);background:var(--card2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;flex-shrink:0;}
+.notif-btn.on{background:rgba(124,106,247,0.15);border-color:var(--accent);}
+
+.shift-row{display:flex;gap:6px;padding:0 16px 8px;}
+.shift-btn{flex:1;padding:7px;border-radius:10px;border:0.5px solid var(--border2);background:var(--card2);color:var(--text2);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;}
+.shift-btn.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+.week-bar{display:flex;gap:4px;padding:0 16px 6px;}
+.wday{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;}
+.wday-name{font-size:10px;color:var(--text3);}
+.wday-track{width:100%;height:22px;background:var(--card2);border-radius:3px;overflow:hidden;display:flex;align-items:flex-end;}
+.wday-fill{width:100%;background:var(--accent);opacity:0.35;border-radius:3px;transition:height .3s;}
+.wday-fill.cur{opacity:1;}
+.wday-pct{font-size:9px;color:var(--text3);}
+
+.day-strip{display:flex;gap:5px;padding:0 16px 8px;overflow-x:auto;scrollbar-width:none;}
+.day-strip::-webkit-scrollbar{display:none;}
+.day-btn{flex-shrink:0;width:42px;padding:6px 4px;border-radius:10px;border:0.5px solid var(--border);background:var(--card2);text-align:center;cursor:pointer;transition:all .15s;}
+.day-btn .dn{font-size:10px;color:var(--text2);margin-bottom:2px;}
+.day-btn .di{font-size:14px;font-weight:500;color:var(--text);}
+.day-btn .dd{width:4px;height:4px;border-radius:50%;margin:2px auto 0;background:transparent;}
+.day-btn.gym .dd{background:var(--gym);}
+.day-btn.on{background:var(--accent);border-color:var(--accent);}
+.day-btn.on .dn,.day-btn.on .di{color:#fff;}
+.day-btn.on .dd{background:rgba(255,255,255,0.6);}
+
+.focus-bar{padding:0 16px 8px;}
+.focus-pill{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:99px;background:rgba(124,106,247,0.1);border:0.5px solid rgba(124,106,247,0.25);font-size:12px;color:var(--accent);}
+
+.prog-card{margin:0 16px 8px;padding:11px 13px;border-radius:12px;border:0.5px solid var(--border);background:var(--card);}
+.prog-head{display:flex;justify-content:space-between;margin-bottom:7px;}
+.prog-lbl{font-size:12px;color:var(--text2);}
+.prog-pct{font-size:13px;font-weight:500;color:var(--accent);}
+.prog-track{height:4px;background:var(--card2);border-radius:99px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:99px;transition:width .35s;}
+
+.blocks{padding:0 16px;}
+.blk{display:flex;gap:10px;padding:11px 13px;border-radius:12px;border:0.5px solid var(--border);background:var(--card);margin-bottom:7px;}
+.blk.commute{border-color:rgba(147,51,234,0.2);background:rgba(147,51,234,0.03);}
+.blk.nextup{border-color:rgba(124,106,247,0.45);}
+.tcol{width:46px;flex-shrink:0;padding-top:1px;}
+.tlbl{font-size:11px;color:var(--text3);line-height:1.4;}
+.bcont{flex:1;min-width:0;}
+.btitle{font-size:13px;font-weight:500;color:var(--text);margin-bottom:7px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.badge-move{font-size:10px;padding:1px 6px;border-radius:99px;background:var(--eng-bg);color:var(--eng);}
+.badge-now{font-size:10px;padding:1px 6px;border-radius:99px;background:var(--accent);color:#fff;}
+.tasks{display:flex;flex-direction:column;gap:7px;}
+.task{display:flex;align-items:flex-start;gap:8px;cursor:pointer;user-select:none;position:relative;}
+.chk{width:17px;height:17px;border-radius:4px;border:1.5px solid var(--border2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;transition:all .12s;}
+.task.done .chk{background:var(--accent);border-color:var(--accent);}
+.chkmark{display:none;color:#fff;font-size:10px;font-weight:700;line-height:1;}
+.task.done .chkmark{display:block;}
+.task-txt{font-size:12px;color:var(--text2);line-height:1.5;flex:1;}
+.task.done .task-txt{text-decoration:line-through;color:var(--text3);}
+.tag{display:inline-block;font-size:10px;padding:1px 5px;border-radius:99px;margin-left:3px;font-weight:500;vertical-align:middle;}
+.t-gym{background:var(--gym-bg);color:var(--gym);}
+.t-dev{background:var(--dev-bg);color:var(--dev);}
+.t-algo{background:var(--algo-bg);color:var(--algo);}
+.t-side{background:var(--side-bg);color:var(--side);}
+.t-eng{background:var(--eng-bg);color:var(--eng);}
+.t-job{background:var(--job-bg);color:var(--job);}
+.t-rest{background:var(--rest-bg);color:var(--rest);}
+.del-btn{opacity:0;font-size:14px;color:var(--text3);padding:0 2px;cursor:pointer;transition:opacity .15s;flex-shrink:0;margin-top:0px;line-height:1.6;}
+.task:hover .del-btn{opacity:1;}
+
+/* 항목 추가 버튼 */
+.add-task-btn{display:flex;align-items:center;gap:6px;margin-top:8px;padding:6px 8px;border-radius:8px;border:1px dashed var(--border2);background:transparent;color:var(--text3);font-size:12px;cursor:pointer;font-family:inherit;width:100%;transition:all .15s;}
+.add-task-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* 블록 추가 버튼 */
+.add-blk-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-bottom:7px;padding:10px;border-radius:12px;border:1px dashed var(--border2);background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.add-blk-btn:hover{border-color:var(--accent);color:var(--accent);}
+
+/* 모달 */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;}
+.modal-bg.show{opacity:1;pointer-events:all;}
+.modal{background:var(--card);border-radius:20px 20px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom,0px));width:100%;max-width:500px;transform:translateY(100%);transition:transform .25s;}
+.modal-bg.show .modal{transform:translateY(0);}
+.modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:14px;}
+.modal label{display:block;font-size:12px;color:var(--text2);margin-bottom:4px;margin-top:10px;}
+.modal input,.modal select{width:100%;padding:9px 11px;border-radius:9px;border:0.5px solid var(--border2);background:var(--card2);color:var(--text);font-size:13px;font-family:inherit;outline:none;}
+.modal input:focus,.modal select:focus{border-color:var(--accent);}
+.modal-btns{display:flex;gap:8px;margin-top:16px;}
+.modal-cancel{flex:1;padding:10px;border-radius:10px;border:0.5px solid var(--border2);background:var(--card2);color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;}
+.modal-ok{flex:1;padding:10px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;}
+
+.tip{margin:0 16px 8px;padding:10px 13px;border-radius:10px;background:rgba(124,106,247,0.06);border:0.5px solid rgba(124,106,247,0.18);font-size:12px;color:var(--text2);line-height:1.6;}
+
+.toast{position:fixed;top:12px;left:12px;right:12px;background:var(--card);border:0.5px solid var(--accent);border-radius:12px;padding:10px 13px;display:flex;align-items:center;gap:9px;transform:translateY(-8px);opacity:0;transition:all .25s;pointer-events:none;z-index:9999;box-shadow:0 4px 24px rgba(0,0,0,.12);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-icon{font-size:18px;flex-shrink:0;}
+.toast-title{font-size:13px;font-weight:500;color:var(--text);}
+.toast-msg{font-size:11px;color:var(--text2);margin-top:1px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="top-title">이직 플래너</div>
+    <div class="top-sub" id="today-lbl"></div>
+  </div>
+  <div class="notif-btn" id="notif-btn" onclick="toggleNotif()">🔔</div>
+</div>
+<div class="shift-row">
+  <button class="shift-btn on" onclick="setShift('early',this)">8시 출근</button>
+  <button class="shift-btn" onclick="setShift('late',this)">10시 출근</button>
+</div>
+<div class="week-bar" id="week-bar"></div>
+<div class="day-strip" id="day-strip"></div>
+<div class="focus-bar">
+  <div class="focus-pill">오늘 포커스 · <strong id="focus-lbl" style="margin-left:2px">-</strong></div>
+</div>
+<div class="prog-card">
+  <div class="prog-head"><span class="prog-lbl">오늘 달성률</span><span class="prog-pct" id="prog-pct">0%</span></div>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+</div>
+<div class="blocks" id="blocks"></div>
+<div class="tip" id="tip"></div>
+
+<!-- 블록 추가 모달 -->
+<div class="modal-bg" id="blk-modal">
+  <div class="modal">
+    <div class="modal-title" id="blk-modal-title">블록 추가</div>
+    <label>시간 (예: 20:00)</label>
+    <input id="inp-time" placeholder="20:00" maxlength="5">
+    <label>블록 제목</label>
+    <input id="inp-btitle" placeholder="예: 저녁 코테">
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('blk-modal')">취소</button>
+      <button class="modal-ok" onclick="confirmAddBlock()">추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- 태스크 추가 모달 -->
+<div class="modal-bg" id="task-modal">
+  <div class="modal">
+    <div class="modal-title">항목 추가</div>
+    <label>내용</label>
+    <input id="inp-task" placeholder="예: 코테 문제 1개 풀기 (30분)">
+    <label>태그</label>
+    <select id="inp-tag">
+      <option value="dev">Java/CS</option>
+      <option value="algo">코테</option>
+      <option value="side">사이드 프로젝트</option>
+      <option value="eng">영어</option>
+      <option value="job">이직</option>
+      <option value="gym">헬스</option>
+      <option value="rest">휴식</option>
+    </select>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('task-modal')">취소</button>
+      <button class="modal-ok" onclick="confirmAddTask()">추가</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon" id="t-icon">⏰</div>
+  <div><div class="toast-title" id="t-title"></div><div class="toast-msg" id="t-msg"></div></div>
+</div>
+
+<script>
+var DAYS=['일','월','화','수','목','금','토'];
+var DK=['sun','mon','tue','wed','thu','fri','sat'];
+var GYM={early:[1,2,4,5],late:[1,3,4,6]};
+var TL={gym:'헬스',dev:'Java/CS',algo:'코테',side:'사이드',eng:'영어',job:'이직',rest:'휴식'};
+var FM=['복습+계획','Java/Spring','코테','면접·이력서','사이드 프로젝트','코테+지원','토플+사이드'];
+var FS=['휴식','CS지식','알고리즘','이력서','프로젝트','주간회고','프로젝트'];
+var TIPS={sun:'일요일은 복습 + 계획의 날. 다음 주를 미리 그려두면 월요일이 훨씬 수월해요.',mon:'월요일은 Java/Spring/CS 집중일. 개념을 단단히 쌓는 게 면접과 코테 모두에 도움이 돼요.',tue:'화요일은 코테의 날. 매일 1~2문제 꾸준히 푸는 게 실력 향상의 핵심이에요.',wed:'수요일은 면접·이력서의 날. 기술 면접 답변은 소리 내어 연습해야 실전에서 막히지 않아요.',thu:'목요일은 사이드 프로젝트의 날. 꾸준한 커밋이 포트폴리오의 핵심이에요.',fri:'금요일은 지원의 날. 준비된 만큼 과감하게 지원하세요.',sat:'토요일은 토플 + 사이드 프로젝트 집중일. 주중에 못한 영어와 프로젝트를 몰아서 진행해요.'};
+
+var GT=[{text:'웜업 10분',tag:'gym'},{text:'메인 운동 40분',tag:'gym'},{text:'유산소 30분 (러닝머신 or 자전거)',tag:'gym'},{text:'쿨다운 + 스트레칭 10분',tag:'gym'}];
+var CI={mon:{title:'출근길',tasks:[{text:'Java/Spring 개념 팟캐스트',tag:'dev'},{text:'CS 면접 질문 오디오 복습',tag:'dev'}]},tue:{title:'출근길',tasks:[{text:'알고리즘 개념 강의 듣기',tag:'algo'},{text:'코테 풀이 방법론 팟캐스트',tag:'algo'}]},wed:{title:'출근길',tasks:[{text:'영어 면접 질문 듣고 따라 말하기',tag:'eng'},{text:'토플 단어 앱 20개',tag:'eng'}]},thu:{title:'출근길',tasks:[{text:'Spring 강의 오디오',tag:'dev'},{text:'CS 개념 팟캐스트',tag:'dev'}]},fri:{title:'출근길',tasks:[{text:'이번 주 핵심 개념 복습',tag:'dev'},{text:'영어 팟캐스트 자유 청취',tag:'eng'}]}};
+var CO={mon:{title:'퇴근길',tasks:[{text:'오늘 Java/CS 개념 머릿속 정리',tag:'dev'},{text:'사이드 프로젝트 아이디어 생각',tag:'side'}]},tue:{title:'퇴근길',tasks:[{text:'코테 틀린 문제 다시 떠올리기',tag:'algo'},{text:'영어 쉐도잉 앱 연습',tag:'eng'}]},wed:{title:'퇴근길',tasks:[{text:'면접 예상 답변 머릿속으로 말해보기',tag:'job'},{text:'링크드인·채용공고 확인',tag:'job'}]},thu:{title:'퇴근길',tasks:[{text:'사이드 프로젝트 다음 할 일 정리',tag:'side'},{text:'CS 개념 복습',tag:'dev'}]},fri:{title:'퇴근길',tasks:[{text:'이번 주 회고 머릿속 정리',tag:'rest'},{text:'주말 공부 계획 세우기',tag:'rest'}]}};
+var AE={mon:[{time:'19:00',title:'Java/Spring + CS 집중',tasks:[{text:'Java 심화 개념 or Spring 강의 (45분)',tag:'dev'},{text:'CS 지식 정리 — 자료구조·네트워크 (30분)',tag:'dev'},{text:'학습 내용 노션 정리 (15분)',tag:'dev'}]}],tue:[{time:'19:00',title:'코테 집중',tasks:[{text:'코테 문제 2개 풀기 (60분)',tag:'algo'},{text:'풀이 분석 + 다른 풀이 탐색 (20분)',tag:'algo'}]}],wed:[{time:'19:00',title:'면접 + 이력서',tasks:[{text:'기술 면접 질문 3개 소리 내어 연습 (30분)',tag:'job'},{text:'이력서·자기소개서 수정 (30분)',tag:'job'},{text:'영어 면접 답변 1개 작성',tag:'eng'}]}],thu:[{time:'19:00',title:'사이드 프로젝트',tasks:[{text:'사이드 프로젝트 코딩 (60분)',tag:'side'},{text:'기능 구현 or 버그 수정',tag:'side'}]}],fri:[{time:'19:00',title:'주간 회고 + 지원',tasks:[{text:'이번 주 달성한 것 메모 (10분)',tag:'rest'},{text:'채용 지원 1~2곳 (30분)',tag:'job'},{text:'다음 주 학습 계획 작성',tag:'rest'}]}],sat:[{time:'09:00',title:'토플·영어 집중',tasks:[{text:'토플 모의시험 or 영역별 문제 (1시간)',tag:'eng'},{text:'오답 분석 + 단어 정리 (30분)',tag:'eng'}]},{time:'11:00',title:'사이드 프로젝트',tasks:[{text:'사이드 프로젝트 집중 코딩 (2시간)',tag:'side'},{text:'기능 완성 or PR 작성',tag:'side'}]},{time:'14:00',title:'코테 or Java',tasks:[{text:'코테 문제 2~3개 (1시간)',tag:'algo'},{text:'Spring/CS 심화 학습 (30분)',tag:'dev'}]},{time:'16:00',title:'휴식',tasks:[{text:'충분한 휴식 + 자유 시간',tag:'rest'}]}],sun:[{time:'10:00',title:'주간 복습',tasks:[{text:'이번 주 틀린 코테 문제 복습 (30분)',tag:'algo'},{text:'Java/CS 개념 주간 복습 (30분)',tag:'dev'}]},{time:'11:30',title:'사이드 프로젝트 or 휴식',tasks:[{text:'사이드 프로젝트 가볍게 or 완전 휴식',tag:'side'}]},{time:'14:00',title:'주간 계획 수립',tasks:[{text:'다음 주 목표 3가지 작성',tag:'rest'},{text:'채용공고 리서치 20분',tag:'job'}]}]};
+var AL={mon:[{time:'20:30',title:'저녁 정리',tasks:[{text:'오늘 Java/CS 내용 복습 노트 (20분)',tag:'dev'},{text:'내일 할 일 메모',tag:'rest'}]}],tue:[{time:'20:30',title:'저녁 코테',tasks:[{text:'코테 문제 1개 추가 (30분)',tag:'algo'},{text:'가볍게 휴식',tag:'rest'}]}],wed:[{time:'20:30',title:'저녁 면접',tasks:[{text:'면접 답변 소리 내어 연습 (20분)',tag:'job'},{text:'내일 할 일 메모',tag:'rest'}]}],thu:[{time:'20:30',title:'저녁 사이드',tasks:[{text:'사이드 프로젝트 가볍게 이어서 (30분)',tag:'side'},{text:'가볍게 휴식',tag:'rest'}]}],fri:[{time:'20:30',title:'주간 회고',tasks:[{text:'이번 주 달성한 것 메모',tag:'rest'},{text:'주말 계획 정리',tag:'rest'}]}],sat:AE.sat,sun:AE.sun};
+var NE={mon:{time:'05:40',title:'아침 Java/Spring',tasks:[{text:'Java 개념 or 강의 1강 (40분)',tag:'dev'},{text:'CS 면접 개념 1개 메모 (15분)',tag:'dev'}]},tue:{time:'05:40',title:'아침 코테',tasks:[{text:'코테 문제 1개 풀기 (50분)',tag:'algo'}]},wed:{time:'05:40',title:'아침 면접 준비',tasks:[{text:'기술 면접 예상 질문 2개 답변 (40분)',tag:'job'}]},thu:{time:'05:40',title:'아침 사이드 프로젝트',tasks:[{text:'사이드 프로젝트 코딩 (50분)',tag:'side'}]},fri:{time:'05:40',title:'아침 정리·지원',tasks:[{text:'학습 노트 정리 (25분)',tag:'dev'},{text:'채용 지원 1곳 (20분)',tag:'job'}]}};
+var NL={mon:{time:'05:40',title:'아침 Java/Spring',tasks:[{text:'Java 개념 강의 1강 (50분)',tag:'dev'},{text:'CS 개념 1개 메모 (20분)',tag:'dev'}]},tue:{time:'05:40',title:'아침 코테',tasks:[{text:'코테 문제 1개 풀기 (55분)',tag:'algo'}]},wed:{time:'05:40',title:'아침 면접·이력서',tasks:[{text:'기술 면접 질문 2개 답변 (40분)',tag:'job'},{text:'이력서 한 섹션 다듬기 (15분)',tag:'job'}]},thu:{time:'05:40',title:'아침 사이드 프로젝트',tasks:[{text:'사이드 프로젝트 코딩 (60분)',tag:'side'}]},fri:{time:'05:40',title:'아침 정리·지원',tasks:[{text:'학습 노트 정리 (25분)',tag:'dev'},{text:'채용 지원 1곳 (20분)',tag:'job'}]}};
+var GS={mon:{time:'07:20',title:'헬스 후 Java/Spring',tasks:[{text:'Java 개념 강의 1강 (30분)',tag:'dev'}]},tue:{time:'07:20',title:'헬스 후 코테',tasks:[{text:'코테 문제 1개 풀기 (30분)',tag:'algo'}]},thu:{time:'07:20',title:'헬스 후 사이드',tasks:[{text:'사이드 프로젝트 코딩 (30분)',tag:'side'}]},fri:{time:'07:20',title:'헬스 후 정리',tasks:[{text:'학습 노트 정리 (20분)',tag:'dev'}]}};
+var NSE=[{h:5,m:30,icon:'🌅',title:'기상 시간!',msg:'물 한 잔 마시고 스트레칭 시작해요.'},{h:5,m:40,icon:'🏋',title:'헬스장 or 공부 시작!',msg:'오늘 아침 루틴을 시작해요.'},{h:7,m:20,icon:'🚿',title:'출근 준비',msg:'샤워 + 아침 식사 챙기세요.'},{h:7,m:55,icon:'🎧',title:'출근길',msg:'이어폰 꽂고 오늘의 학습 콘텐츠 틀어요.'},{h:12,m:0,icon:'🍱',title:'점심시간',msg:'채용공고 10분 확인 or CS 개념 1개!'},{h:17,m:55,icon:'🎧',title:'퇴근길',msg:'오늘 배운 내용 머릿속으로 복습해요.'},{h:19,m:0,icon:'💻',title:'저녁 공부 시작!',msg:'오늘의 메인 학습 블록 시작해요.'},{h:22,m:0,icon:'📝',title:'마무리',msg:'내일 할 일 3가지 메모하고 취침 준비.'}];
+var NSL=[{h:5,m:30,icon:'🌅',title:'기상 시간!',msg:'물 한 잔 마시고 스트레칭 시작해요.'},{h:5,m:40,icon:'🏋',title:'헬스장 or 공부 시작!',msg:'오늘 아침 루틴을 시작해요.'},{h:9,m:5,icon:'🚿',title:'출근 준비',msg:'샤워 + 아침 식사 챙기세요.'},{h:9,m:55,icon:'🎧',title:'출근길',msg:'이어폰 꽂고 오늘의 학습 콘텐츠 틀어요.'},{h:12,m:0,icon:'🍱',title:'점심시간',msg:'채용공고 확인 or CS 개념 1개!'},{h:19,m:55,icon:'🎧',title:'퇴근길',msg:'오늘 배운 내용 머릿속으로 복습해요.'},{h:20,m:30,icon:'💻',title:'저녁 루틴 시작!',msg:'짧게라도 오늘 루틴 마무리해요.'},{h:22,m:30,icon:'📝',title:'마무리',msg:'내일 할 일 메모하고 취침 준비.'}];
+
+// ── 상태 ──
+var shift='early', curDay=new Date().getDay(), notifOn=false, notifTimer=null, toastTimer=null;
+// 모달 컨텍스트
+var modalCtx={type:'',dk:'',bi:-1};
+
+// ── 로컬 스토리지 키 ──
+var LS_CHECKED='planner_checked';
+var LS_CUSTOM='planner_custom';   // 커스텀 블록/태스크
+
+// checked: { 'early-mon-0-0': true, ... }
+var checked={};
+// customBlocks: { 'early-mon': [{time,title,tasks:[],isCustom:true},...] }
+// customTasks:  { 'early-mon-2': [{text,tag,isCustom:true},...] }
+var customData={blocks:{},tasks:{}};
+
+function loadLS(){
+  try{
+    var c=localStorage.getItem(LS_CHECKED);
+    if(c) checked=JSON.parse(c);
+    var d=localStorage.getItem(LS_CUSTOM);
+    if(d) customData=JSON.parse(d);
+  }catch(e){}
+}
+function saveChecked(){ try{localStorage.setItem(LS_CHECKED,JSON.stringify(checked));}catch(e){} }
+function saveCustom(){ try{localStorage.setItem(LS_CUSTOM,JSON.stringify(customData));}catch(e){} }
+
+// ── 블록 생성 ──
+function gymDays(){return GYM[shift];}
+function parseMin(t){if(!t)return -1;var p=t.split(':');if(p.length!==2||isNaN(+p[0]))return -1;return+p[0]*60+ +p[1];}
+
+function getBaseBlocks(di){
+  var dk=DK[di];
+  var isGym=gymDays().indexOf(di)>=0;
+  var isWE=(di===0||di===6);
+  var after=shift==='early'?AE:AL;
+  var blocks=[];
+  blocks.push({time:'05:30',title:'기상',tasks:[{text:'기상 후 물 한 잔 + 스트레칭 5분',tag:'rest'}]});
+  if(isWE){
+    var wa=after[dk]||[];
+    for(var i=0;i<wa.length;i++) blocks.push(wa[i]);
+    return blocks;
+  }
+  if(isGym){
+    blocks.push({time:'05:40',title:'헬스장',tasks:GT});
+    if(shift==='late'&&GS[dk]) blocks.push(GS[dk]);
+  } else {
+    var ng=shift==='early'?NE[dk]:NL[dk];
+    if(ng) blocks.push(ng);
+  }
+  blocks.push({time:shift==='early'?'07:20':'09:10',title:'출근 준비',tasks:[{text:'샤워 + 아침 식사',tag:'rest'}]});
+  if(CI[dk]) blocks.push({time:shift==='early'?'07:55':'09:55',title:CI[dk].title,tasks:CI[dk].tasks,commute:true});
+  blocks.push({time:'12:00',title:'점심시간',tasks:[{text:'채용공고 10분 확인 or CS 개념 1개',tag:'job'}]});
+  if(CO[dk]) blocks.push({time:shift==='early'?'17:55':'19:55',title:CO[dk].title,tasks:CO[dk].tasks,commute:true});
+  var ev=after[dk]||[];
+  for(var j=0;j<ev.length;j++) blocks.push(ev[j]);
+  return blocks;
+}
+
+function getBlocks(di){
+  var dk=DK[di];
+  var base=getBaseBlocks(di);
+  var key=shift+'-'+dk;
+  // 커스텀 블록 추가
+  var cb=customData.blocks[key]||[];
+  var all=base.concat(cb);
+  // 시간순 정렬
+  all.sort(function(a,b){return parseMin(a.time)-parseMin(b.time);});
+  return all;
+}
+
+// ── 렌더 ──
+function render(){
+  var now=new Date();
+  var jsDay=now.getDay();
+  var nowMin=now.getHours()*60+now.getMinutes();
+  document.getElementById('today-lbl').textContent=now.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+
+  // 주간 바
+  var wbH='';
+  for(var i=0;i<7;i++){
+    var dk=DK[i],blks=getBlocks(i),tot=0,dn=0;
+    for(var b=0;b<blks.length;b++){
+      var bkey=shift+'-'+dk+'-b'+b;
+      for(var t=0;t<blks[b].tasks.length;t++){tot++;if(checked[bkey+'-'+t])dn++;}
+    }
+    var pct=tot?Math.round(dn/tot*100):0;
+    wbH+='<div class="wday"><div class="wday-name">'+DAYS[i]+'</div><div class="wday-track"><div class="wday-fill'+(i===jsDay?' cur':'')+'" style="height:'+pct+'%"></div></div><div class="wday-pct">'+pct+'%</div></div>';
+  }
+  document.getElementById('week-bar').innerHTML=wbH;
+
+  // 요일 탭
+  var dsH='';
+  for(var i=0;i<7;i++){
+    var g=gymDays().indexOf(i)>=0;
+    dsH+='<div class="day-btn'+(i===curDay?' on':'')+(g?' gym':'')+'" onclick="setDay('+i+')">'
+      +'<div class="dn">'+DAYS[i]+'</div><div class="di">'+(i===jsDay?'•':i+1)+'</div><div class="dd"></div></div>';
+  }
+  document.getElementById('day-strip').innerHTML=dsH;
+  document.getElementById('focus-lbl').textContent=FM[curDay]+' · '+FS[curDay];
+
+  // 블록
+  var dk=DK[curDay],blocks=getBlocks(curDay);
+  var isToday=(curDay===jsDay),nextup=-1;
+  if(isToday){for(var i=0;i<blocks.length;i++){if(parseMin(blocks[i].time)>nowMin){nextup=i;break;}}}
+
+  var tot=0,dn=0,html='';
+  for(var bi=0;bi<blocks.length;bi++){
+    var blk=blocks[bi];
+    var bkey=shift+'-'+dk+'-b'+bi;
+    var cls='blk'+(blk.commute?' commute':'')+(bi===nextup?' nextup':'');
+    var tH='';
+    for(var ti=0;ti<blk.tasks.length;ti++){
+      var task=blk.tasks[ti],id=bkey+'-'+ti,isc=!!checked[id];
+      tot++;if(isc)dn++;
+      var delBtn=task.isCustom
+        ?'<span class="del-btn" onclick="delTask(\''+shift+'-'+dk+'\','+bi+','+ti+',event)">✕</span>'
+        :'';
+      tH+='<div class="task'+(isc?' done':'')+'" onclick="toggleTask(\''+id+'\')">'
+        +'<div class="chk"><span class="chkmark">✓</span></div>'
+        +'<div class="task-txt">'+task.text+'<span class="tag t-'+task.tag+'">'+TL[task.tag]+'</span></div>'
+        +delBtn+'</div>';
+    }
+    // 항목 추가 버튼
+    tH+='<button class="add-task-btn" onclick="openTaskModal(\''+shift+'-'+dk+'\','+bi+',event)">＋ 항목 추가</button>';
+
+    var nowB=(isToday&&bi===nextup-1)?'<span class="badge-now">진행 중</span>':'';
+    var movB=blk.commute?'<span class="badge-move">이동 중</span>':'';
+    var delBlkBtn=blk.isCustom
+      ?'<span style="margin-left:auto;font-size:11px;color:var(--text3);cursor:pointer;padding:0 2px;" onclick="delBlock(\''+shift+'-'+dk+'\','+bi+',event)">블록 삭제</span>'
+      :'';
+    html+='<div class="'+cls+'"><div class="tcol"><div class="tlbl">'+(blk.time||'')+'</div></div>'
+      +'<div class="bcont"><div class="btitle">'+blk.title+movB+nowB+delBlkBtn+'</div>'
+      +'<div class="tasks">'+tH+'</div></div></div>';
+  }
+  // 블록 추가 버튼
+  html+='<button class="add-blk-btn" onclick="openBlkModal()">＋ 블록 추가</button>';
+  document.getElementById('blocks').innerHTML=html;
+
+  var pct=tot?Math.round(dn/tot*100):0;
+  document.getElementById('prog-pct').textContent=pct+'%';
+  document.getElementById('prog-fill').style.width=pct+'%';
+  document.getElementById('tip').textContent=TIPS[DK[curDay]]||'';
+}
+
+// ── 체크 토글 ──
+function toggleTask(id){
+  checked[id]=!checked[id];
+  saveChecked();
+  render();
+}
+
+// ── 태스크 삭제 ──
+function delTask(key,bi,ti,e){
+  e.stopPropagation();
+  var blks=getBlocks(curDay);
+  var blk=blks[bi];
+  // 커스텀 블록인지 베이스 블록인지 판별
+  var dk=DK[curDay];
+  var baseLen=getBaseBlocks(curDay).length;
+  if(bi<baseLen){
+    // 베이스 블록의 커스텀 태스크
+    var ckey=shift+'-'+dk+'-base'+bi;
+    if(!customData.tasks[ckey]) customData.tasks[ckey]=[];
+    // 실제로는 태스크 배열에서 isCustom인 것만 삭제
+    blk.tasks.splice(ti,1);
+    // 베이스 블록 커스텀 태스크 저장: customData.tasks[key]로 관리
+    // 간편하게: 커스텀 태스크 목록에서 해당 인덱스 제거
+    var ct=customData.tasks[ckey]||[];
+    // ct의 인덱스를 맞춰야 하므로, 해당 task의 텍스트로 찾아 삭제
+  } else {
+    // 커스텀 블록
+    var cbkey=shift+'-'+dk;
+    var baseCount=getBaseBlocks(curDay).length;
+    var cbi=bi-baseCount;
+    if(customData.blocks[cbkey]&&customData.blocks[cbkey][cbi]){
+      customData.blocks[cbkey][cbi].tasks.splice(ti,1);
+    }
+  }
+  saveCustom();
+  render();
+}
+
+// ── 블록 삭제 ──
+function delBlock(key,bi,e){
+  e.stopPropagation();
+  var dk=DK[curDay];
+  var baseCount=getBaseBlocks(curDay).length;
+  var cbi=bi-baseCount;
+  var cbkey=shift+'-'+dk;
+  if(customData.blocks[cbkey]){
+    customData.blocks[cbkey].splice(cbi,1);
+    saveCustom();
+    render();
+  }
+}
+
+// ── 모달 ──
+function openBlkModal(){
+  modalCtx={type:'block',dk:shift+'-'+DK[curDay],bi:-1};
+  document.getElementById('inp-time').value='';
+  document.getElementById('inp-btitle').value='';
+  openModal('blk-modal');
+}
+function openTaskModal(key,bi,e){
+  if(e) e.stopPropagation();
+  modalCtx={type:'task',dk:key,bi:bi};
+  document.getElementById('inp-task').value='';
+  document.getElementById('inp-tag').value='dev';
+  openModal('task-modal');
+}
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+
+function confirmAddBlock(){
+  var time=document.getElementById('inp-time').value.trim();
+  var title=document.getElementById('inp-btitle').value.trim();
+  if(!title){alert('제목을 입력해 주세요.');return;}
+  var key=modalCtx.dk;
+  if(!customData.blocks[key]) customData.blocks[key]=[];
+  customData.blocks[key].push({time:time,title:title,tasks:[],isCustom:true});
+  saveCustom();
+  closeModal('blk-modal');
+  render();
+  showToast('✅','블록 추가됨','"'+title+'" 블록이 추가됐어요.');
+}
+
+function confirmAddTask(){
+  var text=document.getElementById('inp-task').value.trim();
+  var tag=document.getElementById('inp-tag').value;
+  if(!text){alert('내용을 입력해 주세요.');return;}
+  var key=modalCtx.dk;
+  var bi=modalCtx.bi;
+  var dk=DK[curDay];
+  var baseCount=getBaseBlocks(curDay).length;
+
+  if(bi<baseCount){
+    // 베이스 블록에 태스크 추가 → customData.tasks에 저장
+    var ckey=key+'-base'+bi;
+    if(!customData.tasks[ckey]) customData.tasks[ckey]=[];
+    customData.tasks[ckey].push({text:text,tag:tag,isCustom:true});
+  } else {
+    // 커스텀 블록에 태스크 추가
+    var cbi=bi-baseCount;
+    if(customData.blocks[key]&&customData.blocks[key][cbi]){
+      customData.blocks[key][cbi].tasks.push({text:text,tag:tag,isCustom:true});
+    }
+  }
+  saveCustom();
+  closeModal('task-modal');
+  render();
+  showToast('✅','항목 추가됨','"'+text.substring(0,20)+'" 항목이 추가됐어요.');
+}
+
+// 베이스 블록에 커스텀 태스크 병합하여 반환
+var _origGetBaseBlocks=getBaseBlocks;
+getBaseBlocks=function(di){
+  var blocks=_origGetBaseBlocks(di);
+  var dk=DK[di];
+  for(var bi=0;bi<blocks.length;bi++){
+    var ckey=shift+'-'+dk+'-base'+bi;
+    var ct=customData.tasks[ckey]||[];
+    if(ct.length>0) blocks[bi].tasks=blocks[bi].tasks.concat(ct);
+  }
+  return blocks;
+};
+
+// ── 알림 ──
+function toggleNotif(){
+  if(!notifOn){
+    notifOn=true;
+    document.getElementById('notif-btn').classList.add('on');
+    if(notifTimer) clearInterval(notifTimer);
+    notifTimer=setInterval(checkNotifs,60000);
+    showToast('🔔','알림 활성화','스케줄 시간에 맞춰 알림이 표시돼요.');
+  } else {
+    notifOn=false;
+    document.getElementById('notif-btn').classList.remove('on');
+    if(notifTimer) clearInterval(notifTimer);
+    showToast('🔕','알림 끔','알림을 비활성화했어요.');
+  }
+}
+function checkNotifs(){
+  if(!notifOn) return;
+  var now=new Date(),h=now.getHours(),m=now.getMinutes();
+  var sched=shift==='early'?NSE:NSL;
+  for(var i=0;i<sched.length;i++){var n=sched[i];if(n.h===h&&n.m===m)showToast(n.icon,n.title,n.msg);}
+}
+function showToast(icon,title,msg){
+  document.getElementById('t-icon').textContent=icon;
+  document.getElementById('t-title').textContent=title;
+  document.getElementById('t-msg').textContent=msg;
+  var t=document.getElementById('toast');
+  t.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.classList.remove('show');},4000);
+}
+
+function setDay(i){curDay=i;render();}
+function setShift(s,btn){
+  shift=s;
+  document.querySelectorAll('.shift-btn').forEach(function(b){b.classList.toggle('on',b===btn);});
+  render();
+}
+
+// 모달 바깥 클릭 닫기
+document.querySelectorAll('.modal-bg').forEach(function(el){
+  el.addEventListener('click',function(e){if(e.target===el)el.classList.remove('show');});
+});
+
+loadLS();
+render();
+setInterval(render,60000);
+</script>
+</body>
+</html>
